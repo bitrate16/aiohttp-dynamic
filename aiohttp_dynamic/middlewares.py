@@ -137,7 +137,7 @@ class DynamicMiddleware(typing.Sized,
 	
 	async def __call__(self, request: web_request.Request, handler: Handler) -> web_response.StreamResponse:
 		# Rewrap and return
-		for h in reversed(self._handlers):
+		for n, h in reversed(self._handlers): # Do not remove n, 
 			handler = functools.update_wrapper(functools.partial(h, handler=handler), handler)
 		
 		return await handler(request)
