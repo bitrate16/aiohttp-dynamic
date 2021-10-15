@@ -28,6 +28,9 @@ class DynamicMiddleware(typing.Sized,
 	add, get, and deletion of existing middleware handlers after run_app().
 	"""
 
+	# Compability with old aiohttp version
+	__middleware_version__: int = 1
+
 	_handlers: typing.List[typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]
 
 	def __init__(self, middlewares: typing.List[typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]] = []) -> None:
@@ -78,4 +81,4 @@ class DynamicMiddleware(typing.Sized,
 		for h in reversed(self._handlers):
 			handler = functools.update_wrapper(functools.partial(h, handler=handler), handler)
 		
-		return handler
+		return await handler(request)

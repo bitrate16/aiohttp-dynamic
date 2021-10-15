@@ -94,12 +94,12 @@ class AbstractPathRouter(abc.ABC, web_urldispatcher.AbstractResource):
 		if method == hdrs.METH_ANY:
 			if method in self._routes:
 				if overwrite:
-					self._routes[method] = handler
+					self._routes[method] = web_urldispatcher.ResourceRoute(method, handler, self)
 					return True
 				else:
 					return False
 			else:
-				self._routes[method] = handler
+				self._routes[method] = web_urldispatcher.ResourceRoute(method, handler, self)
 				return True
 		
 		# Strict check
