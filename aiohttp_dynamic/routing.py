@@ -701,7 +701,17 @@ class DynamicRouter(web_urldispatcher.AbstractResource):
 
 			# Propagate resolve
 			if r.domain_match(request.headers.get(hdrs.HOST, None)):
-				return await r.resolve(request)
+
+				# Try to resolve
+				match_info, allowed_methods = await r.resolve(request)
+
+				# Allowed methods is empty -> no handler found at all
+				if match_info is None and len(allowed_methods) == 0:
+					continue
+				
+				# Allowed methods is not empty -> found handler for certain path
+				else:
+					return match_info, allowed_methods
 		
 		# Return empty sets
 		return None, set()
