@@ -5,12 +5,12 @@ setup(
 	packages = ['aiohttp_dynamic'],
 	version = '1.0.0',
 	license='Apache License 2.0',
-	description = 'aiohttp extension to build and modify dynamic routes in runtime',
+	description = 'aiohttp extension for creating and modifying dynamic routes in runtime',
 	author = 'bitrate16',
 	author_email = 'bitrate16@gmail.com',
 	url = 'https://github.com/bitrate16/aiohttp-dynamic',
 	download_url = 'https://github.com/bitrate16/aiohttp-dynamic/archive/1.0.0.tar.gz',
-	keywords = ['aiohttp', 'dynamic', 'routing', 'mutable'],
+	keywords = ['aiohttp', 'dynamic', 'routing', 'mutable', 'aiohttp-server'],
 	install_requires = [
 		'aiohttp',
 		'yarl'

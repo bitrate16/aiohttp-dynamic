@@ -984,6 +984,17 @@ class DynamicRouter(web_urldispatcher.AbstractResource):
 
 		return self.add_handler(hdrs.METH_TRACE, path, handler, domain=domain, overwrite=overwrite, overwrite_widecast=overwrite_widecast)
 
+	def add_any(self, path: str, handler: Handler, domain: str = '*', overwrite: bool = True, overwrite_widecast: bool = True) -> bool:
+		"""
+		Adds * (Any method) request handler.
+		If `overwrite` is set to True, it will overwrite the existing handler.
+		If `overwrite_widecast` is set to true, it will overwrite METH_ANY if no
+		handler found for strict method.
+		handler.
+		"""
+
+		return self.add_handler(hdrs.METH_ANY, path, handler, domain=domain, overwrite=overwrite, overwrite_widecast=overwrite_widecast)
+
 	def attach(self, app: web.Application) -> None:
 		"""
 		Attach this resource to the passed pallication
