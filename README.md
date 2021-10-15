@@ -1,2 +1,1 @@
-# aiohttp-dynamic
- aiohttp dynamic routing support extension module
+Don't read me
