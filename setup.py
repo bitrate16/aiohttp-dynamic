@@ -3,13 +3,13 @@ from setuptools import setup
 setup(
 	name = 'aiohttp_dynamic',
 	packages = ['aiohttp_dynamic'],
-	version = '1.0.1',
+	version = '1.1.0',
 	license='Apache License 2.0',
 	description = 'aiohttp extension for creating and modifying dynamic routes in runtime',
 	author = 'bitrate16',
 	author_email = 'bitrate16@gmail.com',
 	url = 'https://github.com/bitrate16/aiohttp-dynamic',
-	download_url = 'https://github.com/bitrate16/aiohttp-dynamic/archive/1.0.1.tar.gz',
+	download_url = 'https://github.com/bitrate16/aiohttp-dynamic/archive/1.1.0.tar.gz',
 	keywords = ['aiohttp', 'dynamic', 'routing', 'mutable', 'aiohttp-server'],
 	install_requires = [
 		'aiohttp',
