@@ -205,6 +205,19 @@ for mw in dynmw:
     print('Hellow World!')
 ```
 
+Since 1.1.0 named middlewares are supported:
+
+```python
+# Add named middleware
+dynmw.add_named_handler(middleware, 'special-handler')
+
+# Overwrite named middleware
+dynmw.del_named_handler(middleware, 'special-handler', overwrite=True)
+
+# Delete named middleware
+dynmw.del_named_handler(middleware, 'special-handler')
+```
+
 ## A bit explaination about priorities
 
 There are two king of priorities: Method priority and Domain priority:
