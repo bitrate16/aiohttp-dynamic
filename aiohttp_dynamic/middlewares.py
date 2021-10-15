@@ -63,10 +63,10 @@ class DynamicMiddleware(typing.Sized,
 		"""
 
 		if name is not None:
-			for m in self._handlers:
+			for i, m in enumerate(self._handlers):
 				if m[0] == name:
 					if overwrite:
-						m[1] = middleware
+						self._handlers[i] = (name, middleware)
 						return True
 					else:
 						return False
@@ -101,9 +101,9 @@ class DynamicMiddleware(typing.Sized,
 		if name is not None:
 			for m in self._handlers:
 				if m[0] == name:
-					return m[1]
+					return True
 		
-		return None
+		return False
 
 	def del_handler(self, index: int) -> None:
 		"""
