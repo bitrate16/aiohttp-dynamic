@@ -458,7 +458,7 @@ class DynamicPathRouter(AbstractPathRouter):
 		}
 	
 	def raw_match(self, path: str) -> bool:
-		return self.raw_path == path
+		return self._raw_path == path
 	
 	def match(self, path: str) -> bool:
 		return self._pattern.fullmatch(path)
