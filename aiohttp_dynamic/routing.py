@@ -15,6 +15,7 @@
 import abc
 import yarl
 import typing
+import typing_extensions
 import re
 import functools
 
@@ -344,7 +345,7 @@ class PlainPathRouter(AbstractPathRouter):
 		# TODO: Add support for subapps
 		raise RuntimeError('Prefixes are not supported in PlainPathHandler')
 
-	def get_info(self) -> typing.TypedDict:
+	def get_info(self) -> typing_extensions.TypedDict:
 		"""
 		Return a dict with additional info useful for introspection (c)
 		"""
@@ -440,7 +441,7 @@ class DynamicPathRouter(AbstractPathRouter):
 		# TODO: Add support for subapps
 		raise RuntimeError('Prefixes are not supported in DynamicPathHandler')
 
-	def get_info(self) -> typing.TypedDict:
+	def get_info(self) -> typing_extensions.TypedDict:
 		"""
 		Return a dict with additional info useful for introspection (c)
 		"""
@@ -658,7 +659,7 @@ class DynamicRouter(web_urldispatcher.AbstractResource):
 		# TODO: Add support for subapps
 		raise RuntimeError('Prefixes are not supported in DynamicRouter')
 	
-	def get_info(self) -> typing.TypedDict:
+	def get_info(self) -> typing_extensions.TypedDict:
 		"""
 		Return a dict with additional info useful for introspection (c)
 		"""
