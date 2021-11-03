@@ -17,6 +17,7 @@ import functools
 
 from aiohttp import web_request
 from aiohttp import web_response
+from aiohttp import hdrs
 from .routing import Handler
 
 class DynamicMiddleware(typing.Sized,
@@ -32,46 +33,78 @@ class DynamicMiddleware(typing.Sized,
 	__middleware_version__: int = 1
 
 	# List of middlewares tuples
-	# (middleware_name, middleware_handler)
-	_handlers: typing.List[typing.Tuple[str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]]
+	# (domain_suffix, middleware_name, middleware_handler)
+	_handlers: typing.List[typing.Tuple[str, str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]]
 
 	def __init__(self, 
 				middlewares: typing.List[typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]] = [],
-				named_middlewares: typing.List[typing.Tuple[str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]] = []) -> None:
+				named_middlewares: typing.List[typing.Tuple[str, str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]] = []) -> None:
 		super().__init__()
 
 		# Append unnamed and named middlewares
-		self._handlers = [] if middlewares is None else [ (None, m) for m in middlewares ]
+		self._handlers = [] if middlewares is None else [ ('', None, m) for m in middlewares ]
 		self._handlers.extend([] if named_middlewares is None else named_middlewares)
 
+		# Sort by suffix match
+		self._handlers.sort(key=functools.cmp_to_key(lambda x, y: 1 if y.endswith(x) else -1))
+
 	@property
-	def handlers(self) -> typing.List[typing.Tuple[str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]]:
+	def handlers(self) -> typing.List[typing.Tuple[str, str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]]:
+		"""
+		Returns list of tuples (domain_suffix, middleware_name, middleware_handler)
+		"""
 		return self.handlers
 	
-	def add_handler(self, middleware: typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]) -> None:
+	def add_handler(self, middleware: typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]], domain: str='', overwrite: bool = True) -> None:
 		"""
-		Append middleware to the end of middlewares list.
+		Append middleware to the end of middlewares list. Domain is optional and
+		defines suffix for middleware.
 		"""
 
-		self._handlers.append((None, middleware))
+		if domain is None:
+			return False
+		
+		self._handlers.append((domain, None, middleware))
+
+		# TODO: Insert without sort
+		# Sort by suffix match
+		self._handlers.sort(key=functools.cmp_to_key(lambda x, y: 1 if y[0].endswith(x[0]) else -1))
+
+		return True
 	
-	def add_named_handler(self, middleware: typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]], name: str, overwrite: bool = True) -> bool:
+	def add_named_handler(self, middleware: typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]], name: str, domain: str='', overwrite: bool = True) -> bool:
 		"""
 		Append middleware to the end of middlewares list or replace existing by
-		the same name if `overwrite` is set to True.
+		the same name if `overwrite` is set to True. Domain is optional and
+		defines suffix for middleware.
+		Named handler overwrites only by name. in case when domain match with
+		another record, it is ignored.
 		Returns True if added.
 		"""
 
+		if domain is None:
+			return False
+
 		if name is not None:
 			for i, m in enumerate(self._handlers):
-				if m[0] == name:
+				if m[1] == name:
 					if overwrite:
-						self._handlers[i] = (name, middleware)
+						self._handlers[i] = (domain, name, middleware)
+
+						# TODO: Insert without sort
+						# Sort by suffix match
+						self._handlers.sort(key=functools.cmp_to_key(lambda x, y: 1 if y[0].endswith(x[0]) else -1))
+
 						return True
 					else:
 						return False
 
-		self._handlers.append((name, middleware))
+		self._handlers.append((domain, name, middleware))
+
+		# TODO: Insert without sort
+		# Sort by suffix match
+		self._handlers.sort(key=functools.cmp_to_key(lambda x, y: 1 if y[0].endswith(x[0]) else -1))
+		
 		return True
 	
 	def get_handler(self, index: int) -> typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]:
@@ -79,7 +112,7 @@ class DynamicMiddleware(typing.Sized,
 		Returns middleware handler by index.
 		"""
 
-		return self._handlers[index][1]
+		return self._handlers[index][2]
 	
 	def get_named_handler(self, name: str) -> typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]:
 		"""
@@ -88,10 +121,38 @@ class DynamicMiddleware(typing.Sized,
 		
 		if name is not None:
 			for m in self._handlers:
-				if m[0] == name:
-					return m[1]
+				if m[1] == name:
+					return m[2]
 		
 		return None
+	
+	def get_domain_handlers(self, domain: str) -> typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]:
+		"""
+		Returns handlers for given domain suffix.
+		"""
+		
+		result = []
+
+		if domain is not None:
+			for m in self._handlers:
+				if m[0] == domain:
+					result.append(m[2])
+		
+		return result
+	
+	def get_matching_domain_handlers(self, domain: str) -> typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]:
+		"""
+		Returns handlers with domain matching given domain suffix.
+		"""
+		
+		result = []
+
+		if domain is not None:
+			for m in self._handlers:
+				if m[0].endswith(domain):
+					result.append(m[2])
+		
+		return result
 	
 	def contains_named_handler(self, name: str) -> bool:
 		"""
@@ -100,7 +161,31 @@ class DynamicMiddleware(typing.Sized,
 		
 		if name is not None:
 			for m in self._handlers:
-				if m[0] == name:
+				if m[1] == name:
+					return True
+		
+		return False
+	
+	def contains_domain_handler(self, domain: str) -> bool:
+		"""
+		Checks if there exists middleware with given domain suffix.
+		"""
+		
+		if domain is not None:
+			for m in self._handlers:
+				if m[0] == domain:
+					return True
+		
+		return False
+	
+	def contains_matching_domain_handler(self, domain: str) -> bool:
+		"""
+		Checks if there exists middleware matching given domain suffix.
+		"""
+		
+		if domain is not None:
+			for m in self._handlers:
+				if m[0].endswith(domain):
 					return True
 		
 		return False
@@ -119,8 +204,25 @@ class DynamicMiddleware(typing.Sized,
 		
 		if name is not None:
 			for i, m in enumerate(self._handlers):
-				if m[0] == name:
+				if m[1] == name:
 					self._handlers.pop(i)
+					return
+	
+	def del_domain_handlers(self, domain: str) -> None:
+		"""
+		Deletes handlers for given domain suffix.
+		"""
+		
+		if domain is not None:
+			self._handlers[:] = [m for m in self._handlers if m[0] != domain]
+
+	def del_matching_domain_handlers(self, domain: str) -> None:
+		"""
+		Deletes handlers matching given domain suffix.
+		"""
+		
+		if domain is not None:
+			self._handlers[:] = [m for m in self._handlers if not m[0].endswith(domain)]
 
 	def del_handlers(self) -> None:
 		"""
@@ -129,15 +231,25 @@ class DynamicMiddleware(typing.Sized,
 
 		self._handlers.clear()
 	
-	def __iter__(self) -> typing.Iterator[typing.Tuple[str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]]:
+	def __iter__(self) -> typing.Iterator[typing.Tuple[str, str, typing.Callable[[web_request.Request, Handler], typing.Awaitable[web_response.StreamResponse]]]]:
 		return iter(self._handlers)
 	
 	def __len__(self) -> int:
 		return len(self._handlers)
 	
 	async def __call__(self, request: web_request.Request, handler: Handler) -> web_response.StreamResponse:
-		# Rewrap and return
-		for n, h in reversed(self._handlers): # Do not remove n, 
-			handler = functools.update_wrapper(functools.partial(h, handler=handler), handler)
-		
-		return await handler(request)
+		domain = request.headers.get(hdrs.HOST, None)
+
+		if domain is None:
+			# Rewrap and return
+			for s, n, h in reversed(self._handlers): # Do not remove n, 
+				handler = functools.update_wrapper(functools.partial(h, handler=handler), handler)
+			
+			return await handler(request)
+		else:
+			# Rewrap only matching suffix and return
+			for s, n, h in reversed(self._handlers): # Do not remove n, 
+				if domain.endswith(s):
+					handler = functools.update_wrapper(functools.partial(h, handler=handler), handler)
+			
+			return await handler(request)
