@@ -881,7 +881,7 @@ class DynamicRouter(web_urldispatcher.AbstractResource):
 						domain_router.del_router(path)
 					
 					# Try to remove empty domain router
-					if len(domain_router.routes):
+					if len(domain_router.routes) == 0:
 						self.del_domain(domain)
 					
 					return True

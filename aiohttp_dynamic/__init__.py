@@ -15,3 +15,5 @@
 # import public classes
 from .routing import AbstractPathRouter, PlainPathRouter, DynamicPathRouter, DomainRouter, DynamicRouter, Handler
 from .middlewares import DynamicMiddleware
+
+VERSION = '1.3.0'

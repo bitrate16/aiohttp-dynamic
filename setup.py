@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
 	name = 'aiohttp_dynamic',
 	packages = ['aiohttp_dynamic'],
-	version = '1.2.0',
+	version = '1.3.0',
 	license='Apache License 2.0',
 	description = 'aiohttp extension for creating and modifying dynamic routes in runtime',
 	author = 'bitrate16',
